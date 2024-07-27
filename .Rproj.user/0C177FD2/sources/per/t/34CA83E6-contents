@@ -1,0 +1,16 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+
+```{r}
+library(rio)
+```
+
+
+```{r}
+df_iii <- import("Modulo_III.sav")
+```
+

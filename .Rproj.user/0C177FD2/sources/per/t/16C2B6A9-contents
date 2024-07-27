@@ -1,0 +1,90 @@
+---
+title: "patrimoniales"
+format: html
+editor: visual
+---
+
+```{r}
+# Intalar y desplegar paquetes y librearias, respectivamente
+pacman::p_load(jsonlite,
+               sf,
+               readr,
+               tidyverse,
+               tidyr,
+               purrr,
+               dplyr #convertir lista a
+               )
+```
+
+```{r}
+df_base <- read.csv("./FILTRO-TOTAL/delitos_patrimoniales.csv")
+#head(df_base)
+```
+
+
+```{r}
+# Eliminamos la columna type
+df_base1 <- df_base |> 
+  dplyr::select(-type)
+```
+
+```{r}
+clean_and_convert_json <- function(json_text) {
+  # Reemplazar comillas simples por comillas dobles
+  json_text <- gsub("'", "\"", json_text)
+  # Escapar comillas internas
+  json_text <- gsub('\\\\"', '\"', json_text)
+  json_text <- gsub('\\\\', '', json_text)
+  # Eliminar caracteres no válidos
+  json_text <- gsub("[^[:print:]]", "", json_text)
+  # Intentar convertir a lista usando fromJSON
+  tryCatch(
+    fromJSON(json_text, flatten = TRUE),
+    error = function(e) {
+      # Si ocurre un error, devolver NULL
+      print(paste("Error parsing JSON:", json_text))
+      return(NULL)
+    }
+  )
+}
+
+```
+
+```{r}
+# Aplicar la función a la columna 'features'
+df_base1$features <- lapply(df_base1$features, clean_and_convert_json)
+```
+
+
+```{r}
+df_base2 <- df_base1 %>% filter(!map_lgl(df_base1$features, is.null))
+```
+
+
+```{r}
+data_expanded <- df_base2 %>%
+  mutate(
+    id = map_chr(features, ~ if (!is.null(.x$id)) .x$id else NA_character_),
+    geometry_type = map_chr(features, ~ if (!is.null(.x$geometry$type)) .x$geometry$type else NA_character_),
+    coordinates = map(features, ~ if (!is.null(.x$geometry$coordinates)) .x$geometry$coordinates else list(NA)),
+    properties = map(features, ~ if (!is.null(.x$properties)) .x$properties else list(NA))
+  ) %>%
+  select(-features)
+```
+
+```{r}
+properties_df <- data_expanded %>%
+  select(properties) %>%
+  unnest_wider(properties)
+```
+
+```{r}
+final_data <- bind_cols(data_expanded %>% select(-properties), properties_df)
+```
+
+```{r}
+write.csv(data_expanded, "./FILTRO-TOTAL/data_final.csv", row.names = FALSE)
+```
+
+
+

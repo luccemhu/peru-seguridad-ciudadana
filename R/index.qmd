@@ -1,0 +1,217 @@
+---
+title: "Analysis of Citizen Security Module 600 for 2022 and 2023"
+subtitle: "Exploring Victimization Rates, Perception of Insecurity, and Home Burglaries"
+theme:
+  light: flatly
+  dark: darkly
+format:
+  html:
+    code-fold: true
+    code-summary: "Code"
+    toc: true
+    toc-location: left
+    toc-title: " "
+    number-sections: true
+    self-contained: true
+include-after-body: "footer-hu.html"
+editor: source
+fig-cap-location: margin
+author: 
+  name: "Joel Belsasar Ccallocunto \n **[luccemhu](https://github.com/luccemhu)**"
+  affiliation: "Pontifical Catholic University of Peru"
+  email: joel.hucall@gmail.com
+keywords: "Citizen Security, Urban crime, Victimization"
+date: today
+description: "This document provides a descriptive analysis of the citizen security module 600 for the years 2022 and 2023, including victimization rates, perception of insecurity, and home burglaries by department."
+title-block-banner: "#f0f3f5"
+title-block-banner-color: "black"
+css: style.css
+bibliography: references.bib
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl
+---
+
+::: {.callout-caution collapse="true"}
+## Considerations for this Document
+
+This Quarto document serves as a practical illustration of the concepts analyzed in data analysis. It is designed primarily for educational purposes, focusing on demonstrating analytical techniques rather than scientific rigor.
+:::
+
+## Introduction
+
+Today more than ever, Latin America is the most violent region in the world, with the highest crime and homicide rates—a situation that was already critical even before the arrival of COVID-19 [@hernandez2019; @hernandez2020; @dammert2022]. Across the region, crime and its consequences affect an increasing number of people and have become a recurrent topic in political debates. However, despite the fact that no other country in the region reports as high a perception of insecurity as Peru [@kanashiro2018], the country is not particularly violent. Between 2022 and 2023, the homicide rate was 7.8 per 100,000 inhabitants [@inei2024], placing the country in the more "peaceful" quartile of the region. However, there are signs that urban violence is increasing due to new criminal modalities, such as contract killings and extortions, among others.
+
+
+This document provides a descriptive analysis of the security module 600 for the years 2022 and 2023, using data obtained from the National Institute of Statistics and Informatics [(INEI)](https://proyectos.inei.gob.pe/microdatos/) from modules 100 and 600. The analysis focuses on victimization rates, perception of insecurity, and home burglaries by department. The objective is to provide a clear view of how these indicators have changed in the past two years and explore possible patterns and trends.
+
+You can read more about the dataset from the National Survey of Budgetary Programs (Enapres) [here](http://webinei.inei.gob.pe/anda_inei/index.php/catalog/746), conducted by the National Institute of Statistics and Informatics (INEI). It is an annual survey that provides disaggregated information at the departmental level since 2016.
+
+Let's load the necessary libraries before starting!!
+
+
+```{r, warning=FALSE, message=FALSE}
+# Use pacman's function p_load to install and load the necessary libraries:
+# First, install the pacman package if it's not already installed
+#install.packages("pacman")
+
+pacman::p_load(
+  tidyverse, # for data manipulation and visualization
+  readxl,    # for reading Excel files
+  skimr,     # for data summaries
+  janitor,   # for cleaning column names
+  ggplot2,   # for creating static plots
+  patchwork, # for combining multiple plots
+  DT,        # for interactive tables
+  knitr,     # for creating static tables with kable()
+  plotly,    # for interactive plots
+  haven,     # for reading and writing data in SPSS, Stata, and SAS formats
+  gridExtra  # for arranging multiple grid-based figures
+)
+```
+
+## Loading Data
+
+The dataset was obtained from INEI, specifically from modules 100 and 600, which cover citizen security in Peru. These data have been cleaned and prepared for analysis in the previous step of this pipeline in Stata16.
+
+```{r}
+# Read the clean dataset
+data <- readRDS(file = "../input/clean_data.rds")
+# .. <- indica para importar de subcarpeta a subcarpeta
+```
+
+![Insecurity in Peru. Source: Infobae](../images/victimas.png){width=600}
+
+
+The image above provides an overview of insecurity in Peru. For a detailed review of the dataset, you can consult the interactive version using the `DT` package:
+
+```{r}
+# Descriptive statistics by department
+datatable(data, options = list(pageLength = 5), filter = "top")
+```
+
+
+## Relationship between Victimization and Perception of Insecurity in 2023
+
+```{r, fig.align = "center", fig.width=7, fig.height=5, warning=FALSE, fig.cap="Relationship Between Victimization and Perception of Insecurity in 2023."}
+# Filter data for the year 2023
+data_2023 <- data %>%
+  filter(periodo == 2023)
+
+# Create scatter plot of victimization and perception of insecurity for 2023
+p <- data_2023 %>%
+  ggplot(aes(x = dvictim, y = dperinseg)) +
+  geom_point(color = "#69b3a2") +
+  labs(
+    x = "Victimization",
+    y = "Perception of Insecurity",
+    title = "Relationship between Victimization and Perception of Insecurity in 2023"
+  ) +
+  theme_minimal()
+ggplotly(p)
+```
+
+
+This plot illustrates the relationship between victimization and the perception of insecurity in 2023. Although literature suggests that there is no strong correlation between these two indicators, our data shows some variability between departments. However, the observed differences are not significant enough to completely refute the lack of correlation mentioned in previous studies.
+
+## Comparison of Victimization Rates and Perception of Insecurity by Department
+
+```{r}
+# Scatter plot of victimization rates and perception of insecurity
+j <- data %>%
+  ggplot(aes(x = dvictim, y = dperinseg, color = as.factor(periodo))) +
+  geom_point(alpha = 0.7, size = 3) +
+  facet_wrap(~nombredd) +
+  labs(
+    x = "Victimization Rate",
+    y = "Perception of Insecurity Rate",
+    title = "Comparison of Victimization Rates and Perception of Insecurity by Department",
+    color = "Year"
+  ) +
+  scale_color_manual(values = c("2022" = "blue", "2023" = "red")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_blank()
+  )
+ggplotly(j)
+
+```
+
+
+This plot compares the rates of victimization and perception of insecurity between departments for the years 2022 and 2023. The data suggests that while there is some variability, the differences between the two years are not substantial enough to establish a strong correlation, partially supporting the literature that argues a lack of relationship between perception and victimization.
+
+
+## Calculation of the Victimization Rate by Department in Peru
+
+$$
+Victimization\ Rate = \frac{\sum_{i=1}^{n} \text{Victims}_i}{\sum_{i=1}^{n} \text{Population}_i} \times 100
+$$
+
+**Where:**
+
+- $\text{Victims}_i$: Total number of victims reported in department $i$.
+- $\text{Population}_i$: Total population of department $i$.
+- $n$: Total number of departments.
+
+## Descriptive Statistics
+
+```{r}
+#| layout-ncol: 2 # Specifies the number of columns for displaying your plots, etc.
+
+# Descriptive statistics for 2022
+stats_2022 <- data %>%
+  filter(periodo == 2022) %>%
+  summarise(
+    avg_victimization = mean(dvictim, na.rm = TRUE),
+    avg_perception = mean(dperinseg, na.rm = TRUE),
+    avg_robbery = mean(roboviv, na.rm = TRUE)
+  )
+
+# Display table for 2022
+kable(stats_2022, caption = "Citizen Insecurity for the Year 2022")
+
+# Descriptive statistics for 2023
+stats_2023 <- data %>%
+  filter(periodo == 2023) %>%
+  summarise(
+    avg_victimization = mean(dvictim, na.rm = TRUE),
+    avg_perception = mean(dperinseg, na.rm = TRUE),
+    avg_robbery = mean(roboviv, na.rm = TRUE)
+  )
+
+# Display table for 2023
+kable(stats_2023, caption = "Citizen Insecurity for the Year 2023")
+
+```
+
+The table below presents the average statistics related to citizen insecurity for the years 2022 and 2023. In 2022, the average rates of victimization, perception of insecurity, and robbery were 0.1657, 0.6497, and 0.1111, respectively. In 2023, these averages increased to 0.1855 for victimization, 0.6586 for perception, and 0.1391 for robbery. This suggests a general rise in both victimization and perception of insecurity, alongside an increase in robbery rates over the observed period.
+
+
+## Trends in Victimization and Perception of Insecurity in Selected Departments
+
+```{r, warning=FALSE, message=FALSE, fig.height=7, fig.width=10, fig.cap="Relationship Between Victimization and Perception of Insecurity from 2022 to 2023 for Departments with High Perception of Citizen Insecurity and Low Victimization."}
+# Load functions
+source("functions.R")
+
+# Create trend plots for selected departments
+p1 <- create_trend_plot(data, "LAMBAYEQUE", "#1f77b4")
+p2 <- create_trend_plot(data, "HUANCAVELICA", "#ff7f0e")
+
+# Combine the plots into a single visualization
+grid.arrange(p1, p2, ncol = 2)
+```
+
+These trend plots for selected departments show how victimization and perception of insecurity have evolved in these specific contexts. Comparing selected departments may reveal patterns not evident in the aggregated national data.
+
+
+## Conclusions
+
+The analysis reveals variations in victimization and perception of insecurity rates between departments for 2022 and 2023. Although the data shows some variability, the differences are not substantial enough to completely refute the lack of correlation mentioned in existing literature.
+
+### Limitations
+
+A significant limitation of this analysis is the lack of data disaggregated at the district level. The heterogeneity within urban areas, especially in Lima Metropolitana, where approximately one-third of the country's population resides, can significantly influence the relationship between perception of insecurity and victimization. Without district-level data, it is difficult to capture this variability and verify whether the lack of correlation observed at the departmental level is consistent throughout the country.
+
+
+
+
