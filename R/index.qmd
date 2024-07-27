@@ -47,6 +47,12 @@ You can read more about the dataset from the National Survey of Budgetary Progra
 
 Let's load the necessary libraries before starting!!
 
+```{r, include=FALSE}
+#install.packages("renv")
+renv::init()
+#renv::snapshot() # Actualizar nuevos paquetes
+```
+
 
 ```{r, warning=FALSE, message=FALSE}
 # Use pacman's function p_load to install and load the necessary libraries:
